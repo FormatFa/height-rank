@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="container"></div>
+</head>
+<body>
+
+
+
+<script src="js/konva.js"></script>
+<script src="js/jquery.min.js"></script>
+
+<script>
+    var stage = new Konva.Stage({
+        container: 'container',
+        width:1000,
+        height:500
+    })
+var minHeight = 0;
+var maxHeight = 200;
+var layer = new Konva.Layer();
+
+var circle = new Konva.Circle({
+    x:stage.width()/2,
+    y:stage.height()/2,
+    radius:70,
+    fill:'red',
+    stroke:'black',
+    strokeWidth:4
+})
+
+// x,y
+var yAxis = new Konva.Line({
+    points:[0,0,0,stage.height()],
+    stroke: 'red',
+    strokeWidth:5
+})
+// 刻度
+var annotationY=[100,150,170,180,200]
+var heightToPixel = (height)=>(height*stage.height()/maxHeight)
+var heightToY = (height)=>stage.height()-(height*stage.height()/maxHeight)
+var lines = annotationY.map(y=>{
+    return {
+        height:y,
+        points:[0,heightToY(y),10,heightToY(y)]
+    }
+})
+console.log(lines)
+lines.map(line=>{
+    return new Konva.Line({
+    points:line.points,
+    stroke: 'red',
+    strokeWidth:5
+    })
+}).forEach(shape=>{
+    layer.add(shape)
+})
+lines.map(line=>{
+    var labelLeft = new Konva.Label({
+        x: line.points[2],
+        y: line.points[3],
+        opacity: 0.75,
+      });
+      labelLeft.add(
+        new Konva.Tag({
+          fill: 'green',
+          pointerDirection: 'left',
+          pointerWidth: 10,
+          pointerHeight: 8,
+          lineJoin: 'round',
+        })
+      );
+      labelLeft.add(
+        new Konva.Text({
+          text: line.height+"cm",
+          fontFamily: 'Calibri',
+          fontSize: 14,
+          padding: 5,
+          fill: 'white',
+        })
+      );
+    return labelLeft
+}).forEach(shape=>{
+    layer.add(shape)
+})
+
+
+$.get("wz.json",data=>{
+    console.log(data)
+    data.forEach((hero,index)=>{
+
+    Konva.Image.fromURL('img/'+hero.name+'.png',function(darthNode) {
+    console.log("load image donw")
+    var rawImgHeight = darthNode.attrs.image.height;
+    var h = hero.height;
+    var imgHeight = heightToPixel(h)
+    var scale = imgHeight/rawImgHeight
+    var imgWidth = darthNode.attrs.image.width*scale;
+    console.log(scale)
+    console.log( heightToY(h))
+    darthNode.setAttrs({
+          x: index*200,
+          y: heightToY(h),
+          scaleX: scale,
+          scaleY: scale,
+          cornerRadius: 20,
+        });
+        layer.add(darthNode);
+      
+})
+    })
+
+
+})
+
+// draw images
+// Konva.Image.fromURL('img/吕布.png',function(darthNode) {
+//     console.log("load image donw")
+//     var rawImgHeight = darthNode.attrs.image.height;
+//     var h = 192;
+//     var imgHeight = heightToPixel(h)
+//     var scale = imgHeight/rawImgHeight
+//     console.log(scale)
+//     console.log( heightToY(h))
+//     darthNode.setAttrs({
+//           x: 40,
+//           y: heightToY(h),
+//           scaleX: scale,
+//           scaleY: scale,
+//           cornerRadius: 20,
+//         });
+//         layer.add(darthNode);
+      
+// })
+
+
+var xAxis = new Konva.Line({
+    points:[0,stage.height(),stage.width(),stage.height()],
+    stroke: 'red',
+    strokeWidth:5
+})
+
+layer.add(xAxis)
+layer.add(yAxis)
+// layer.add(circle)
+stage.add(layer)
+layer.draw();
+</script>
+</body>
+</html>
