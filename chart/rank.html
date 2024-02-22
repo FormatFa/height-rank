@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <button onclick="play()">▶️</button>
     <div id="container"></div>
 </head>
 <body>
@@ -87,6 +88,11 @@ lines.map(line=>{
     layer.add(shape)
 })
 
+var heroGroup = new Konva.Group({
+    x:200,
+    y:0,
+    rotation:0
+})
 
 $.get("wz.json",data=>{
     console.log(data)
@@ -108,7 +114,7 @@ $.get("wz.json",data=>{
           scaleY: scale,
           cornerRadius: 20,
         });
-        layer.add(darthNode);
+        heroGroup.add(darthNode);
       
 })
     })
@@ -143,11 +149,37 @@ var xAxis = new Konva.Line({
     strokeWidth:5
 })
 
+layer.add(heroGroup)
 layer.add(xAxis)
 layer.add(yAxis)
 // layer.add(circle)
 stage.add(layer)
+
+console.log("play")
+    var anim = new Konva.Animation(function (frame) {
+        console.log(frame)
+        console.log(heroGroup.x(),stage.width())
+        if(Math.abs(heroGroup.x())>stage.width()) {
+            heroGroup.x(stage.width()-20)
+        }
+        else {
+            heroGroup.x(heroGroup.x()-frame.time*1)
+        }
+        // hexagon.x(
+        //   amplitude * Math.sin((frame.time * 2 * Math.PI) / period) + centerX
+        // );
+      }, layer);
+function play() {
+  
+
+      anim.start();
+      setTimeout(()=>{
+        anim.stop()
+      },1000)
+}
 layer.draw();
+
+
 </script>
 </body>
 </html>
