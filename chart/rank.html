@@ -1,185 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <button onclick="play()">▶️</button>
+    <button onclick="pause()">⏸</button>
+
     <div id="container"></div>
-</head>
-<body>
+  </head>
 
+  <body>
+    <script src="js/konva.js"></script>
+    <script src="js/jquery.min.js"></script>
 
-
-<script src="js/konva.js"></script>
-<script src="js/jquery.min.js"></script>
-
-<script>
-    var stage = new Konva.Stage({
-        container: 'container',
-        width:1000,
-        height:500
-    })
-var minHeight = 0;
-var maxHeight = 200;
-var layer = new Konva.Layer();
-
-var circle = new Konva.Circle({
-    x:stage.width()/2,
-    y:stage.height()/2,
-    radius:70,
-    fill:'red',
-    stroke:'black',
-    strokeWidth:4
-})
-
-// x,y
-var yAxis = new Konva.Line({
-    points:[0,0,0,stage.height()],
-    stroke: 'red',
-    strokeWidth:5
-})
-// 刻度
-var annotationY=[100,150,170,180,200]
-var heightToPixel = (height)=>(height*stage.height()/maxHeight)
-var heightToY = (height)=>stage.height()-(height*stage.height()/maxHeight)
-var lines = annotationY.map(y=>{
-    return {
-        height:y,
-        points:[0,heightToY(y),10,heightToY(y)]
-    }
-})
-console.log(lines)
-lines.map(line=>{
-    return new Konva.Line({
-    points:line.points,
-    stroke: 'red',
-    strokeWidth:5
-    })
-}).forEach(shape=>{
-    layer.add(shape)
-})
-lines.map(line=>{
-    var labelLeft = new Konva.Label({
-        x: line.points[2],
-        y: line.points[3],
-        opacity: 0.75,
+    <script>
+      var winWidth = window.innerWidth - 100;
+      var height = window.innerHeight - 25;
+      var stage = new Konva.Stage({
+        container: "container",
+        width: winWidth,
+        height: 500,
       });
-      labelLeft.add(
-        new Konva.Tag({
-          fill: 'green',
-          pointerDirection: 'left',
-          pointerWidth: 10,
-          pointerHeight: 8,
-          lineJoin: 'round',
-        })
-      );
-      labelLeft.add(
-        new Konva.Text({
-          text: line.height+"cm",
-          fontFamily: 'Calibri',
-          fontSize: 14,
-          padding: 5,
-          fill: 'white',
-        })
-      );
-    return labelLeft
-}).forEach(shape=>{
-    layer.add(shape)
-})
 
-var heroGroup = new Konva.Group({
-    x:200,
-    y:0,
-    rotation:0
-})
+      var minHeight = 0;
+      var maxHeight = 550;
+      var maxHeight = 560;
 
-$.get("wz.json",data=>{
-    console.log(data)
-    data.forEach((hero,index)=>{
 
-    Konva.Image.fromURL('img/'+hero.name+'.png',function(darthNode) {
-    console.log("load image donw")
-    var rawImgHeight = darthNode.attrs.image.height;
-    var h = hero.height;
-    var imgHeight = heightToPixel(h)
-    var scale = imgHeight/rawImgHeight
-    var imgWidth = darthNode.attrs.image.width*scale;
-    console.log(scale)
-    console.log( heightToY(h))
-    darthNode.setAttrs({
-          x: index*200,
-          y: heightToY(h),
-          scaleX: scale,
-          scaleY: scale,
+      var lineColor = "black";
+      lineColor = "white";
+      var blue = "#2b6da9";
+      var layer = new Konva.Layer();
+
+      Konva.Image.fromURL("img/background.png", function (darthNode) {
+        darthNode.setAttrs({
+          x: 0,
+          y: 0,
+          scaleX: stage.width() / darthNode.attrs.image.width,
+          scaleY: stage.height() / darthNode.attrs.image.height,
           cornerRadius: 20,
         });
-        heroGroup.add(darthNode);
-      
-})
-    })
+        layer.add(darthNode);
+        darthNode.zIndex(1);
+      });
+
+    
+
+      // 绘制x,y轴
+      var yAxis = new Konva.Line({
+        points: [0, 0, 0, stage.height()],
+        stroke: lineColor,
+        strokeWidth: 5,
+      });
+      // 绘制刻度刻度(cm)
+      var annotationY = [100, 150,180,200];
+      // 现实高度转换为在容器里的像素大小
+      var heightToPixel = (height) => (height * stage.height()) / maxHeight;
+      var heightToY = (height) =>
+        stage.height() - (height * stage.height()) / maxHeight;
+
+      var heroGroup = new Konva.Group({
+        x: 50,
+        y: 0,
+        rotation: 0,
+      });
+      var maxAnimationWidth = stage.width();
+
+ 
+      // 各路英雄的数据，用于过滤
+      var zhonglu = [
+        "安琪拉",
+        "扁鹊",
+        "不知火舞",
+        "嫦娥",
+        "妲己",
+        "大乔",
+        "貂蝉",
+        "干将莫邪",
+        "高渐离",
+        "海诺",
+        "海月",
+        "姜子牙",
+        "金蝉",
+        "米莱狄",
+        "墨子",
+        "女娲",
+        "上官婉儿",
+        "沈梦溪",
+        "司马懿",
+        "王昭君",
+        "西施",
+        "小乔",
+        "杨玉环",
+        "弈星",
+        "张良",
+        "甄姬",
+        "周瑜",
+        "诸葛亮",
+        "武则天",
+        "嬴政"
+      ];
+      var duikanglu = [
+        "白起",
+        "曹操","嫦娥","程咬金","达摩","东皇太一",
+        "关羽","海诺","花木兰","姬小满","橘右京",
+        "铠","狂铁","老夫子","李信","廉颇",
+        "刘邦","吕布","马超","蒙恬","梦奇",
+        "芈月","哪吒","司空震","苏烈","孙策",
+        "夏侯惇","夏洛特","项羽","亚连","亚瑟",
+        "杨戬","曜","元歌","赵怀真","钟无艳",
+        "猪八戒"
+      ]
+      var youzou = [
+        "蔡文姬","蔡文姬2","太乙真人2","刘禅2","大乔","东皇太一","盾山","朵莉亚","鬼谷子","姜子牙","金蝉","廉颇","刘邦","刘禅","鲁班大师","明世隐","墨子","牛魔","桑启","苏烈","孙膑","太乙真人","夏侯惇","项羽","瑶","张飞","张良","钟馗","庄周"
+      ]
+      var daye = ['阿古朵','阿轲','白起','百里玄策','曹操','嫦娥','程咬金','达摩','典韦','暃','宫本武藏','韩信','姬小满','镜','橘右京','铠','兰陵王','澜','李白','李元芳','刘备','露娜','梦奇','芈月','娜可露露','盘古','裴擒虎','司空震','司马懿','孙悟空','夏侯惇','雅典娜','亚瑟','杨戬','曜','云缨','云中君','赵怀真','赵云','钟无艳','诸葛亮','猪八戒','大司命']
+
+      function createTip(x,y,text) {
+        var tooltip = new Konva.Label({
+                x: x,
+                y: y,
+                opacity: 0.95,
+              });
+        
+              tooltip.add(
+                new Konva.Tag({
+                  fill: blue,
+                  pointerDirection: "down",
+                  pointerWidth: 10,
+                  pointerHeight: 10,
+                  lineJoin: "round",
+                  shadowColor: "white",
+                  shadowBlur: 3,
+                  shadowOffsetX: 3,
+                  shadowOffsetY: 3,
+                  shadowOpacity: 1,
+                })
+              );
+
+              tooltip.add(
+                new Konva.Text({
+                //   text: hero.name + "\n" + hero.height + "cm",
+                text:text,
+                  fontFamily: "Calibri",
+                  fontSize: 18,
+                  padding: 5,
+                  fill: "white",
+                })
+              );
+              return tooltip
+      }
+
+      $.get("heroHeight.json", (data) => {
+        console.log(data);
+
+        // data = data.filter(a=>a.height<200)
+        // data = data.filter(a=>a.job.includes('射手'))
+        // data = data.filter((a) => zhonglu.includes(a.name));
+        // data = data.filter((a) => zhonglu.includes(a.name));
+        // data = data.filter((a) => duikanglu.includes(a.name));
+        // data = data.filter((a) => youzou.includes(a.name));
+        // data = data.filter((a) => a.sex=='women');
+      //  data = data.filter((a) => daye.includes(a.name));
 
 
-})
-
-// draw images
-// Konva.Image.fromURL('img/吕布.png',function(darthNode) {
-//     console.log("load image donw")
-//     var rawImgHeight = darthNode.attrs.image.height;
-//     var h = 192;
-//     var imgHeight = heightToPixel(h)
-//     var scale = imgHeight/rawImgHeight
-//     console.log(scale)
-//     console.log( heightToY(h))
-//     darthNode.setAttrs({
-//           x: 40,
-//           y: heightToY(h),
-//           scaleX: scale,
-//           scaleY: scale,
-//           cornerRadius: 20,
-//         });
-//         layer.add(darthNode);
-      
-// })
 
 
-var xAxis = new Konva.Line({
-    points:[0,stage.height(),stage.width(),stage.height()],
-    stroke: 'red',
-    strokeWidth:5
-})
 
-layer.add(heroGroup)
-layer.add(xAxis)
-layer.add(yAxis)
-// layer.add(circle)
-stage.add(layer)
+        data = data.map(item=>{
+            if(item.name=='夏洛特') {
+                item.height=183;
+            }
+            return item
+        });
+        data=data.sort((a, b) => b.height - a.height);
 
-console.log("play")
-    var anim = new Konva.Animation(function (frame) {
-        console.log(frame)
-        console.log(heroGroup.x(),stage.width())
-        if(Math.abs(heroGroup.x())>stage.width()) {
-            heroGroup.x(stage.width()-20)
+        // 交换成最高的在中间,用于制作合照
+        // let middleIndex = Math.floor(data.length/2);
+        // console.log(middleIndex)
+        // let i=0,j=middleIndex;
+        // while(i<j) {
+        //     let temp = data[i]
+        //     data[i] = data[j]
+        //     data[j] = temp
+        //     i+=1;
+        //     j-=1;
+        // }
+        console.log("sort:", data);
+        var startX = 200;
+        maxAnimationWidth = data.length * 200 + stage.width();
+        var images = [];
+        // 先加载好全部图片
+        for (let i = 0; i < data.length; i += 1) {
+
+          images.push(
+            new Promise((resolve, reject) => {
+              let hero = data[i]
+          
+              Konva.Image.fromURL(
+                "img/" + hero.name + ".png",
+                function (darthNode) {
+                    resolve({
+                        darthNode:darthNode
+                    })
+                },function(err) {
+                    console.log("on err:",err)
+                    resolve(null)
+                }
+              );
+            
+            })
+          );
         }
-        else {
-            heroGroup.x(heroGroup.x()-frame.time*1)
+        Promise.all(images).then((values)=>{
+
+            let startX = 0
+            for(let index=0;index<values.length;index+=1) {
+                let hero = data[index]
+                if(values[index]==null) {
+                    continue
+                }
+
+                let text =(index+1)+"."+ hero.name+ "\n" + hero.height + "cm";
+
+                    if(hero.name=='夏洛特') {
+                        text = hero.name+ "\n" + "? cm";
+
+                    }
+
+                let darthNode = values[index].darthNode
+                var rawImgHeight = darthNode.attrs.image.height;
+                // 如果有设置的高度就使用设置了的
+                var heroHeight = hero.height;
+                var imgHeight = heightToPixel(heroHeight);
+                var scale = imgHeight / rawImgHeight;
+                if (hero.heroImgHeight) {
+                scale = imgHeight / hero.heroImgHeight;
+              }
+              var imgWidth = darthNode.attrs.image.width * scale;
+              var imgX = index * 200;
+              imgX = startX
+              var imgY = heightToY(heroHeight);
+              darthNode.setAttrs({
+                x: imgX,
+                y: stage.height() - rawImgHeight * scale,
+                scaleX: scale,
+                scaleY: scale,
+                cornerRadius: 20,
+                draggable: true
+              });
+            let rawY = darthNode.y()
+              // 锁定只能水平拖动·
+              darthNode.on('dragmove', () => {
+                    darthNode.y(rawY);
+            });
+              heroGroup.add(darthNode);
+            //   startX+=(imgWidth/4)*3
+
+
+            // // 设置每个图片之间的间隔，根据需要动态配置
+            if(imgWidth>200) {
+              // 越大间距越大
+                startX+=(imgWidth/3)*1.65
+            }
+            else 
+              startX+=(imgWidth/5)*4
+
+            // startX+=250
+           
+            startX+=25
+
+
+              // 计算tooltip的位置
+              let y = imgY;
+              let x = imgX + imgWidth / 2;
+              if (y < 70) {
+                y = 120 + ((index % 3) + 60);
+              }
+
+              // 女英雄
+              y-=32
+            
+            
+              let tooltip = createTip(x,y,text)
+              heroGroup.add(tooltip);
+            }
+
+        }).catch(err=>{
+            console.log("promise err:",err)
+        })
+    
+      });
+
+
+
+
+      var xAxis = new Konva.Line({
+        points: [0, stage.height(), stage.width(), stage.height()],
+        stroke: lineColor,
+        strokeWidth: 5,
+      });
+      // 刻度虚线
+      var lines = annotationY.map((y) => {
+        return {
+          height: y,
+          points: [0, heightToY(y), 10, heightToY(y)],
+        };
+      });
+      var dashLine = annotationY.map((y) => {
+        return {
+          height: y,
+          points: [0, heightToY(y), stage.width(), heightToY(y)],
+        };
+      });
+      dashLine
+        .map((line) => {
+          return new Konva.Line({
+            points: line.points,
+            stroke: lineColor,
+            strokeWidth: 2,
+            dash: [10, 10],
+          });
+        })
+        .forEach((shape) => {
+          layer.add(shape);
+        });
+      layer.add(heroGroup);
+      layer.add(xAxis);
+      layer.add(yAxis);
+
+      lines
+        .map((line) => {
+          return new Konva.Line({
+            points: line.points,
+            stroke: lineColor,
+            strokeWidth: 2,
+          });
+        })
+        .forEach((shape) => {
+          layer.add(shape);
+        });
+      lines
+        .map((line) => {
+          var labelLeft = new Konva.Label({
+            x: line.points[2],
+            y: line.points[3],
+            opacity: 0.75,
+          });
+          labelLeft.add(
+            new Konva.Tag({
+              fill: blue,
+              pointerDirection: "left",
+              pointerWidth: 10,
+              pointerHeight: 4,
+              lineJoin: "round",
+            })
+          );
+          labelLeft.add(
+            new Konva.Text({
+              text: line.height + "cm",
+              fontFamily: "Calibri",
+              fontSize: 16,
+              padding: 2,
+              fill: "white",
+            })
+          );
+          return labelLeft;
+        })
+        .forEach((shape) => {
+          layer.add(shape);
+        });
+
+      stage.add(layer);
+
+
+      // 画面自动播放的动画
+      var anim = new Konva.Animation(function (frame) {
+        if (Math.abs(heroGroup.x()) > maxAnimationWidth) {
+          heroGroup.x(stage.width() - 20);
+        } else {
+          heroGroup.x(heroGroup.x() - 60 / frame.frameRate);
         }
-        // hexagon.x(
-        //   amplitude * Math.sin((frame.time * 2 * Math.PI) / period) + centerX
-        // );
       }, layer);
-function play() {
-  
+      function play() {
+        console.log(maxAnimationWidth);
 
-      anim.start();
-      setTimeout(()=>{
-        anim.stop()
-      },1000)
-}
-layer.draw();
-
-
-</script>
-</body>
+        anim.start();
+      }
+      function pause() {
+        anim.stop();
+      }
+      layer.draw();
+    </script>
+  </body>
 </html>

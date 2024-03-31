@@ -1,0 +1,10 @@
+数据抓取来源:
+https://pvp.qq.com/ip/champion.html
+
+https://pvp.qq.com/zlkdatasys/yuzhouzhan/list/heroList.json?t=1708760820208
+
+https://pvp.qq.com/zlkdatasys/ip/hero/m/548.html
+
+
+英雄关系数据
+https://game.gtimg.cn/images/yxzj/act/a20160510story/relavance/data.js
